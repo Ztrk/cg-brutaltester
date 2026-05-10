@@ -56,8 +56,9 @@ public class OldGameThread extends Thread {
     public void run() {
         while (true) {
             game = 0;
+			// TODO: Is SPRT stopping handled correctly with multiple threads?
             synchronized (count) {
-                if (count.get() < n) {
+                if (count.get() < n && !playerStats.isStopped()) {
                     game = count.get() + 1;
                     count.set(game);
                 }
@@ -153,9 +154,9 @@ public class OldGameThread extends Thread {
                 line = unrotated;
 
                 log("Referee: " + line);
-                playerStats.add(line);
+                playerStats.add(line, seedRotate[0]);
 
-                LOG.info("End of game " + game + ": " + line.substring(7) + "\t" + playerStats);
+                LOG.info("End of game " + game + ": " + line.substring(7) + "\t" + playerStats + playerStats.sprtStatus());
             } catch (Exception exception) {
                 LOG.error("Exception in game " + game, exception);
             } finally {

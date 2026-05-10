@@ -35,7 +35,13 @@ public class Main {
                    .addOption("l", true, "A directory for games logs")
                    .addOption("s", false, "Swap player positions")
                    .addOption("i", true, "Initial seed. For repeatable tests")
-                   .addOption("o", false, "Old mode");
+                   .addOption("o", false, "Old mode")
+                   .addOption(Option.builder().longOpt("elo0").hasArg().desc("SPRT H0 Elo (default 0)").build())
+                   .addOption(Option.builder().longOpt("elo1").hasArg().desc("SPRT H1 Elo (enables SPRT)").build())
+                   .addOption(Option.builder().longOpt("alpha").hasArg().desc("SPRT Type I error rate (default 0.05)").build())
+                   .addOption(Option.builder().longOpt("beta").hasArg().desc("SPRT Type II error rate (default 0.05)").build())
+                   .addOption(Option.builder().longOpt("model").hasArg().desc("SPRT model: logistic, normalized, bayesian (default logistic)").build())
+                   .addOption(Option.builder().longOpt("no-penta").desc("Disable pentanomial statistics for SPRT").build());
 
             CommandLine cmd = new DefaultParser().parse(options, args);
 
@@ -67,6 +73,7 @@ public class Main {
             }
 
             // Games count
+            boolean nExplicit = cmd.hasOption("n");
             int n = 1;
             try {
                 n = Integer.valueOf(cmd.getOptionValue("n"));
@@ -102,6 +109,42 @@ public class Main {
             }
             // Prepare stats objects
             playerStats = new PlayerStats(playersCmd.size());
+
+            // SPRT configuration
+            if (cmd.hasOption("elo1")) {
+                if (playersCmd.size() != 2) {
+                    LOG.fatal("SPRT requires exactly 2 players");
+                    System.exit(1);
+                }
+
+                double elo0 = 0.0;
+                double elo1;
+                double alpha = 0.05;
+                double beta = 0.05;
+                String modelStr = "logistic";
+
+                try { elo0 = Double.parseDouble(cmd.getOptionValue("elo0")); } catch (Exception e) {}
+                elo1 = Double.parseDouble(cmd.getOptionValue("elo1"));
+                try { alpha = Double.parseDouble(cmd.getOptionValue("alpha")); } catch (Exception e) {}
+                try { beta = Double.parseDouble(cmd.getOptionValue("beta")); } catch (Exception e) {}
+                if (cmd.hasOption("model")) modelStr = cmd.getOptionValue("model");
+
+                boolean usePenta = swap && !cmd.hasOption("no-penta");
+                usePenta = Sprt.validate(alpha, beta, elo0, elo1, modelStr, usePenta);
+
+                Sprt sprt = new Sprt(alpha, beta, elo0, elo1, Sprt.Model.fromString(modelStr));
+                playerStats.setSprt(sprt, usePenta);
+
+                if (!nExplicit) {
+                    n = 500000;
+                }
+
+                LOG.info("SPRT: model=" + modelStr + " elo0=" + elo0 + " elo1=" + elo1
+                        + " alpha=" + alpha + " beta=" + beta
+                        + " bounds=" + sprt.getBounds() + " elo=" + sprt.getElo()
+                        + " pentanomial=" + usePenta);
+            }
+
             Mutable<Integer> count = new Mutable<>(0);
 
             // Start the threads
