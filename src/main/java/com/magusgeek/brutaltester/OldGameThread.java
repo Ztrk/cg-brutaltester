@@ -156,7 +156,7 @@ public class OldGameThread extends Thread {
                 log("Referee: " + line);
                 playerStats.add(line, seedRotate[0]);
 
-                LOG.info("End of game " + game + ": " + line.substring(7) + "\t" + playerStats + playerStats.sprtStatus());
+                LOG.info("End of game " + game + ": " + line.substring(7) + "\t" + playerStats);
             } catch (Exception exception) {
                 LOG.error("Exception in game " + game, exception);
             } finally {

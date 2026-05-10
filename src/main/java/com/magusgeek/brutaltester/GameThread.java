@@ -156,7 +156,7 @@ public class GameThread extends Thread {
 
 				stats.add(scores, seedRotate[0]);
 
-				LOG.info(new StringBuilder().append("End of game ").append(game).append("\t").append(stats).append(stats.sprtStatus()));
+				LOG.info(new StringBuilder().append("End of game ").append(game).append("\t").append(stats));
 
 			} catch (Exception exception) {
 				LOG.error("Exception in game " + game, exception);

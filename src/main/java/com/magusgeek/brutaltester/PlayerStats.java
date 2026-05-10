@@ -192,11 +192,20 @@ public class PlayerStats {
 		return String.format("%.2f", amount * 100.0 / total) + "%";
 	}
 
+	private String formatSprt() {
+		if (sprt == null) return "";
+		return String.format("LLR: %.2f (%.1f%%)", lastLLR, sprt.getFraction(lastLLR) * 100.0);
+	}
+
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
 
 		for (int i = 0; i < n; ++i) {
 			sb.append(" ").append(percent(global[i][VICTORY] / ((float) n - 1)));
+		}
+
+		if (sprt != null) {
+			sb.append("\t").append(formatSprt());
 		}
 
 		return sb.toString();
@@ -287,10 +296,5 @@ public class PlayerStats {
 		} else {
 			System.out.println("Test inconclusive (not enough games)");
 		}
-	}
-
-	public String sprtStatus() {
-		if (sprt == null) return "";
-		return String.format(" LLR: %.2f (%.1f%%)", lastLLR, sprt.getFraction(lastLLR) * 100.0);
 	}
 }
