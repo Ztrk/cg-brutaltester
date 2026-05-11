@@ -13,7 +13,6 @@ public class PlayerStats {
 	private int n;
 	private int total;
 
-	// TODO: Refactor
 	// SPRT fields
 	private Sprt sprt;
 	private volatile boolean stopped;
@@ -215,39 +214,32 @@ public class PlayerStats {
 			System.out.println(separator);
 		}
 
+		int w = stats[0][1][VICTORY];
+		int l = stats[0][1][DEFEAT];
+		int d = stats[0][1][DRAW];
+		System.out.printf("Games: %d, Wins: %d, Losses: %d, Draws: %d%n", w + l + d, w, l, d);
+
 		printSprt();
 	}
 
 	public void printSprt() {
 		if (sprt == null) return;
 
-		int w = stats[0][1][VICTORY];
-		int l = stats[0][1][DEFEAT];
-		int d = stats[0][1][DRAW];
-
-		double llr;
 		if (usePentanomial) {
-			llr = sprt.getLLR(pentaWW, pentaWD, pentaWL, pentaDD, pentaLD, pentaLL);
-		} else {
-			llr = sprt.getLLR(w, d, l);
+			double wl_dd_ratio = pentaWL / (double)(pentaDD);
+			System.out.printf("Pentanomial: [%d, %d, %d, %d, %d], WL/DD Ratio: %.2f%n",
+					pentaLL, pentaLD, pentaWL + pentaDD, pentaWD, pentaWW, wl_dd_ratio);
 		}
-		Sprt.Result result = sprt.getResult(llr);
-		double fraction = sprt.getFraction(llr);
 
-		System.out.println();
-		System.out.printf("SPRT: LLR: %.2f (%.1f%%) %s %s%n",
-				llr, fraction * 100.0, sprt.getBounds(), sprt.getElo());
-		System.out.printf("Games: %d  W: %d  L: %d  D: %d%n", w + l + d, w, l, d);
-		if (usePentanomial) {
-			System.out.printf("Pentanomial: [%d, %d, %d, %d, %d]%n",
-					pentaLL, pentaLD, pentaWL + pentaDD, pentaWD, pentaWW);
-		}
-		if (result == Sprt.Result.H1) {
-			System.out.println("H1 was accepted");
-		} else if (result == Sprt.Result.H0) {
-			System.out.println("H0 was accepted");
+		double fraction = sprt.getFraction(lastLLR);
+		System.out.printf("LLR: %.2f (%.1f%%) %s %s%n", lastLLR, fraction * 100.0, sprt.getBounds(), sprt.getElo());
+
+		if (lastResult == Sprt.Result.H1) {
+			System.out.println("SPRT completed - H1 was accepted");
+		} else if (lastResult == Sprt.Result.H0) {
+			System.out.println("SPRT completed - H0 was accepted");
 		} else {
-			System.out.println("Test inconclusive (not enough games)");
+			System.out.println("SPRT completed - result inconclusive");
 		}
 	}
 }
