@@ -23,28 +23,17 @@ public class PlayerStats {
 	private double lastLLR;
 	private Sprt.Result lastResult = Sprt.Result.CONTINUE;
 
-	public PlayerStats(int n) {
+	public PlayerStats(int n, Sprt sprt, boolean usePentanomial) {
 		this.n = n;
 		total = 0;
 		stats = new int[n][n][3];
 		global = new int[n][3];
-	}
-
-	public void setSprt(Sprt sprt, boolean usePentanomial) {
 		this.sprt = sprt;
 		this.usePentanomial = usePentanomial;
 	}
 
 	public boolean isStopped() {
 		return stopped;
-	}
-
-	public double getLastLLR() {
-		return lastLLR;
-	}
-
-	public Sprt.Result getLastResult() {
-		return lastResult;
 	}
 
 	synchronized public void add(int[] scores) {
@@ -85,53 +74,17 @@ public class PlayerStats {
 	}
 
 	synchronized public void add(String line, int seed) {
-		int p1result = addStringInternal(line);
-		if (sprt != null && n == 2) {
-			updateSprtStats(p1result, seed);
-		}
-	}
-
-	private int addStringInternal(String line) {
 		String[] params = line.split(" ");
 
-		int[] positions = new int[n];
+		int[] scores = new int[n];
 
 		for (int i = 1; i < params.length; ++i) {
 			for (char c : params[i].toCharArray()) {
-				positions[Character.getNumericValue(c)] = i - 1;
+				scores[Character.getNumericValue(c)] = -i + 1;
 			}
 		}
 
-		for (int i = 0; i < n; ++i) {
-			for (int j = i + 1; j < n; ++j) {
-				if (positions[i] < positions[j]) {
-					stats[i][j][VICTORY] += 1;
-					stats[j][i][DEFEAT] += 1;
-					global[i][VICTORY] += 1;
-					global[j][DEFEAT] += 1;
-				} else if (positions[i] > positions[j]) {
-					stats[j][i][VICTORY] += 1;
-					stats[i][j][DEFEAT] += 1;
-					global[j][VICTORY] += 1;
-					global[i][DEFEAT] += 1;
-				} else {
-					stats[i][j][DRAW] += 1;
-					stats[j][i][DRAW] += 1;
-					global[i][DRAW] += 1;
-					global[j][DRAW] += 1;
-				}
-			}
-		}
-
-		total += 1;
-
-		// Return p1's result vs p2 (only meaningful for 2-player)
-		if (n == 2) {
-			if (positions[0] < positions[1]) return VICTORY;
-			if (positions[0] > positions[1]) return DEFEAT;
-			return DRAW;
-		}
-		return -1;
+		add(scores, seed);
 	}
 
 	/**

@@ -73,7 +73,6 @@ public class Main {
             }
 
             // Games count
-            boolean nExplicit = cmd.hasOption("n");
             int n = 1;
             try {
                 n = Integer.valueOf(cmd.getOptionValue("n"));
@@ -107,10 +106,10 @@ public class Main {
                 SeedGenerator.initialSeed(newSeed);
                 LOG.info("Initial Seed: " + newSeed);
             }
-            // Prepare stats objects
-            playerStats = new PlayerStats(playersCmd.size());
 
             // SPRT configuration
+            Sprt sprt = null;
+            boolean usePenta = false;
             if (cmd.hasOption("elo1")) {
                 if (playersCmd.size() != 2) {
                     LOG.fatal("SPRT requires exactly 2 players");
@@ -118,26 +117,21 @@ public class Main {
                 }
 
                 double elo0 = 0.0;
-                double elo1;
+                double elo1 = 0.0;
                 double alpha = 0.05;
                 double beta = 0.05;
                 String modelStr = "logistic";
 
                 try { elo0 = Double.parseDouble(cmd.getOptionValue("elo0")); } catch (Exception e) {}
-                elo1 = Double.parseDouble(cmd.getOptionValue("elo1"));
+                try { elo1 = Double.parseDouble(cmd.getOptionValue("elo1")); } catch (Exception e) {}
                 try { alpha = Double.parseDouble(cmd.getOptionValue("alpha")); } catch (Exception e) {}
                 try { beta = Double.parseDouble(cmd.getOptionValue("beta")); } catch (Exception e) {}
                 if (cmd.hasOption("model")) modelStr = cmd.getOptionValue("model");
 
-                boolean usePenta = swap && !cmd.hasOption("no-penta");
+                usePenta = swap && !cmd.hasOption("no-penta");
                 usePenta = Sprt.validate(alpha, beta, elo0, elo1, modelStr, usePenta);
 
-                Sprt sprt = new Sprt(alpha, beta, elo0, elo1, Sprt.Model.fromString(modelStr));
-                playerStats.setSprt(sprt, usePenta);
-
-                if (!nExplicit) {
-                    n = 500000;
-                }
+                sprt = new Sprt(alpha, beta, elo0, elo1, Sprt.Model.fromString(modelStr));
 
                 LOG.info("SPRT: model=" + modelStr + " elo0=" + elo0 + " elo1=" + elo1
                         + " alpha=" + alpha + " beta=" + beta
@@ -145,6 +139,8 @@ public class Main {
                         + " pentanomial=" + usePenta);
             }
 
+            // Prepare stats objects
+            playerStats = new PlayerStats(playersCmd.size(), sprt, usePenta);
             Mutable<Integer> count = new Mutable<>(0);
 
             // Start the threads
